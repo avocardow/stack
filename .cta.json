@@ -1,0 +1,30 @@
+{
+  "projectName": "stack",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "pnpm",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {},
+  "git": false,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "cloudflare",
+    "convex",
+    "shadcn",
+    "tanstack-query",
+    "t3env",
+    "compiler",
+    "sentry",
+    "posthog",
+    "better-auth",
+    "form",
+    "table",
+    "store"
+  ]
+}
