@@ -1,297 +1,230 @@
-Welcome to your new TanStack Start app! 
+# stack
 
-# Getting Started
+A TanStack Start template, scaffolded with deliberate choices for full-stack web apps deployed to Cloudflare Workers. Convex for data, Better Auth for sessions, Sentry + PostHog for observability, Sandcastle for unattended agent runs.
 
-Configure `.env.local` with real Convex credentials before running `pnpm dev` — the dev server requires `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` to render any route (see [Setting up Convex](#setting-up-convex) below).
+This is the *starting point* for new projects, not a finished application.
 
-To run this application:
+---
+
+## What's included
+
+| Layer | Choice |
+|---|---|
+| Framework | TanStack Start (RC) on Vite v8 |
+| Language | TypeScript v6, React 19 |
+| Runtime | Node.js 22 (host), Cloudflare Workers (production) |
+| Package manager | pnpm 10.14.0 (pinned via `packageManager`) |
+| UI | Tailwind CSS v4 + shadcn (Radix primitives) |
+| Database | Convex |
+| Auth | Better Auth |
+| State / data | TanStack Query, Form, Table, Store, Router |
+| Testing | Vitest + Testing Library + jest-dom |
+| Lint / format | Biome via Ultracite preset |
+| Observability | Sentry + PostHog |
+| Schema validation | Zod v4 |
+| Env vars | t3-env |
+| TS hygiene | `@total-typescript/ts-reset` |
+| Agent orchestration | Sandcastle 0.5.7 (`.sandcastle/`) |
+| CI | GitHub Actions |
+
+For agent-readable project guidance, see [`AGENTS.md`](./AGENTS.md).
+
+---
+
+## First run
+
+### 1. Clone and install
 
 ```bash
+gh repo create my-project --template avocardow/stack --clone
+cd my-project
 pnpm install
+```
+
+### 2. Configure environment
+
+Copy the env example:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in `.env.local` with real values. At minimum:
+
+- `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` (run `pnpm dlx convex init` to set automatically)
+- `BETTER_AUTH_SECRET` (run `pnpm dlx @better-auth/cli secret` to generate)
+
+Optional but recommended:
+
+- `VITE_POSTHOG_KEY` for analytics
+- `VITE_SENTRY_DSN` and `SENTRY_DSN` for error tracking
+
+The dev server will fail to render any route without `VITE_CONVEX_URL` set — this is intentional fail-fast behaviour, not a bug.
+
+### 3. Start Convex
+
+In a separate terminal:
+
+```bash
+pnpm dlx convex dev
+```
+
+This starts the Convex backend and watches `convex/` for changes.
+
+### 4. Start the dev server
+
+```bash
 pnpm dev
 ```
 
-# Building For Production
+App runs at http://localhost:3000.
 
-To build this application for production:
+---
 
-```bash
-pnpm build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## Daily commands
 
 ```bash
-pnpm test
+pnpm dev          # Start dev server (requires .env.local + convex dev running)
+pnpm test         # Run Vitest in run-once mode
+pnpm typecheck    # Run TypeScript compiler in check-only mode
+pnpm check        # Run Ultracite (Biome) lint + format check
+pnpm fix          # Auto-fix lint and format issues
+pnpm build        # Production build (outputs to .output/)
+pnpm preview      # Preview the production build locally
+pnpm deploy       # Build and deploy to Cloudflare Workers
 ```
 
-## Styling
+A passing `pnpm check && pnpm typecheck && pnpm test` is the minimum bar before committing.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `pnpm add @tailwindcss/vite tailwindcss --dev`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
-```
-
+---
 
 ## Deploy to Cloudflare Workers
 
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
+Production runs on Cloudflare Workers via the Cloudflare Vite plugin and `wrangler.jsonc`.
 
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
+### One-time setup
 
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
+```bash
+pnpm add -g wrangler
+wrangler login
+```
 
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
+### Set production secrets
 
+For each secret in `.env.example`, set it in Cloudflare:
 
-## Setting up Convex
+```bash
+wrangler secret put VITE_CONVEX_URL
+wrangler secret put BETTER_AUTH_SECRET
+# etc.
+```
 
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `pnpm dlx convex init` to set them automatically.)
-- Run `pnpm dlx convex dev` to start the Convex server.
+Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
 
+### Deploy
 
-## Shadcn
+```bash
+pnpm deploy
+```
 
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+This runs `pnpm build` then `wrangler deploy`. The build embeds `instrument.server.mjs` for SSR Sentry, then ships the bundle to Workers.
+
+KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` if needed — see the [Cloudflare Workers configuration docs](https://developers.cloudflare.com/workers/wrangler/configuration/). This template uses Convex for all persistence by default; add Cloudflare bindings only if you have a specific reason.
+
+---
+
+## Adding shadcn components
 
 ```bash
 pnpm dlx shadcn@latest add button
 ```
 
+Components land in `src/components/ui/` as editable files (not dependencies).
 
-## T3Env
+---
 
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
+## Sandcastle (unattended agent runs)
 
-### Usage
+The `.sandcastle/` directory configures [Sandcastle](https://github.com/mattpocock/sandcastle), an AI agent orchestrator that runs Claude Code inside Docker containers against a backlog of GitHub Issues.
 
-```ts
-import { env } from "#/env";
+### Setup (per project)
 
-console.log(env.VITE_APP_TITLE);
-```
-
-
-
-
-
-## Setting up PostHog
-
-1. Create a PostHog account at [posthog.com](https://posthog.com)
-2. Get your Project API Key from [Project Settings](https://app.posthog.com/project/settings)
-3. Set `VITE_POSTHOG_KEY` in your `.env.local`
-
-### Optional Configuration
-
-- `VITE_POSTHOG_HOST` - Set this if you're using PostHog Cloud EU (`https://eu.i.posthog.com`) or self-hosting
-
-
-## Setting up Better Auth
-
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
-
+1. Build the Docker image:
    ```bash
-   pnpm dlx @better-auth/cli secret
+   sandcastle docker build-image
+   ```
+2. Copy the env example and fill in tokens:
+   ```bash
+   cp .sandcastle/.env.example .sandcastle/.env
+   ```
+   - `CLAUDE_CODE_OAUTH_TOKEN` — generate via `claude setup-token` (uses your Claude subscription, not API credits)
+   - `GH_TOKEN` — copy from `gh auth token` or generate at https://github.com/settings/tokens (scope: `repo`)
+
+3. Label issues you want the agent to work on with `Sandcastle`.
+
+4. Run:
+   ```bash
+   npx tsx .sandcastle/main.ts
    ```
 
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
+### What's pre-configured
 
-### Adding a Database (Optional)
+This template ships Sandcastle with several non-default decisions baked in:
 
-Better Auth can work in stateless mode, but to persist user data, add a database:
+- **OAuth-token auth** instead of API key (uses your Claude subscription)
+- **Default model: `claude-opus-4-7`** (override via `agent: claudeCode("...")` in `main.ts`)
+- **macOS-friendly Dockerfile** (`chmod -R 0777 /home/agent` to handle host UID ≠ image UID; `~/.claude/` pre-seed for [anthropics/claude-code#8938](https://github.com/anthropics/claude-code/issues/8938))
+- **5-minute install hook timeout** (Sandcastle's 60s default isn't enough for `pnpm install` on macOS Docker bind mounts)
+- **No `copyToWorktree: ["node_modules"]`** — host pnpm node_modules can't be reused in the Linux container due to architecture mismatch; we install fresh in the container instead
+- **GitHub Issues** as the backlog manager (filtered by the `Sandcastle` label)
+- **Two prompts**: `prompt.md` (full RALPH workflow for real runs) and `prompt.smoke.md` (simple sanity-check prompt)
 
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
+See [`AGENTS.md`](./AGENTS.md#sandcastle-agent-orchestration) for more detail.
 
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
+---
+
+## Project structure
+
+```
+src/
+├── routes/                 # File-based routes (TanStack Router generates routeTree.gen.ts)
+│   └── __root.tsx          # Root layout, providers, devtools
+├── integrations/           # External service wiring (Convex, TanStack Query, Sentry)
+├── components/             # UI components (shadcn lives in components/ui/)
+├── lib/                    # Pure utilities
+├── styles.css              # Tailwind v4 entrypoint + theme tokens
+└── router.tsx              # Router instance + SSR Query integration
+
+convex/                     # Convex schema, queries, mutations, actions
+.sandcastle/                # Sandcastle agent orchestration config
+.github/workflows/ci.yml    # Lint, typecheck, test, build on every PR
 ```
 
-Then run migrations:
+Files prefixed with `demo` can be safely deleted — they exist as a starting point for new projects.
 
-```bash
-pnpm dlx @better-auth/cli migrate
-```
+---
 
+## A note on the Vite / Vitest config split
 
+This template has **two Vite configs**:
 
-## Routing
+- `vite.config.ts` — for build, dev, and deploy (includes the Cloudflare plugin)
+- `vitest.config.ts` — for tests (deliberately excludes the Cloudflare plugin)
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+This is intentional: the Cloudflare Vite plugin and Vitest fight over the SSR environment configuration. They can't share a single config without errors. Don't try to merge them back into one.
 
-### Adding A Route
+---
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+## Learn more
 
-TanStack will automatically generate the content of the route file for you.
+- [TanStack Start docs](https://tanstack.com/start)
+- [TanStack Router docs](https://tanstack.com/router)
+- [Convex docs](https://docs.convex.dev)
+- [Better Auth docs](https://www.better-auth.com)
+- [Cloudflare Workers docs](https://developers.cloudflare.com/workers/)
+- [Tailwind CSS v4 docs](https://tailwindcss.com/docs/v4-beta)
+- [shadcn docs](https://ui.shadcn.com)
+- [Biome docs](https://biomejs.dev)
+- [Sandcastle](https://github.com/mattpocock/sandcastle)
 
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+For project-specific conventions and guidance for AI agents, see [`AGENTS.md`](./AGENTS.md).
