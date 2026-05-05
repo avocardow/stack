@@ -66,13 +66,16 @@
     "build": "vite build && cp instrument.server.mjs dist/server",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "format": "biome format",
     "lint": "biome lint",
     "check": "ultracite check",
     "deploy": "pnpm run build && wrangler deploy",
     "start": "node --import ./dist/server/instrument.server.mjs dist/server/index.js",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "clean": "rm -rf node_modules dist .output .vite .tanstack .wrangler coverage",
+    "sandcastle": "npx tsx .sandcastle/main.ts"
   },
   "type": "module",
   "private": true,
