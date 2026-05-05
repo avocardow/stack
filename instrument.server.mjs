@@ -1,10 +1,10 @@
-import * as Sentry from "@sentry/tanstackstart-react";
+import { init as sentryInit } from "@sentry/tanstackstart-react";
 
 const sentryDsn =
 	import.meta.env?.VITE_SENTRY_DSN ?? process.env.VITE_SENTRY_DSN;
 
 if (sentryDsn) {
-	Sentry.init({
+	sentryInit({
 		dsn: sentryDsn,
 		// Adds request headers and IP for users, for more info visit:
 		// https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/configuration/options/#sendDefaultPii

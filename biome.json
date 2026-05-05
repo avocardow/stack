@@ -38,6 +38,18 @@
       "recommended": true
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/src/routes/**/*"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double"

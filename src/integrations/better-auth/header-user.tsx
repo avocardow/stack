@@ -13,7 +13,13 @@ export default function BetterAuthHeader() {
 		return (
 			<div className="flex items-center gap-2">
 				{session.user.image ? (
-					<img alt="" className="h-8 w-8" src={session.user.image} />
+					<img
+						alt=""
+						className="h-8 w-8"
+						height={32}
+						src={session.user.image}
+						width={32}
+					/>
 				) : (
 					<div className="flex h-8 w-8 items-center justify-center bg-neutral-100 dark:bg-neutral-800">
 						<span className="font-medium text-neutral-600 text-xs dark:text-neutral-400">
@@ -24,8 +30,11 @@ export default function BetterAuthHeader() {
 				<button
 					className="h-9 flex-1 border border-neutral-300 bg-white px-4 font-medium text-neutral-900 text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800"
 					onClick={() => {
-						void authClient.signOut();
+						authClient.signOut().catch((err: unknown) => {
+							console.error("sign out failed", err);
+						});
 					}}
+					type="button"
 				>
 					Sign out
 				</button>
